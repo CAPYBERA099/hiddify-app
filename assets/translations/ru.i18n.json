@@ -9,6 +9,7 @@
     "showMore": "Показать больше",
     "showLess": "Показать меньше",
     "filter": "Фильтр",
+    "search": "Поиск",
     "all": "Все",
     "pause": "Пауза",
     "resume": "Возобновить",
@@ -314,6 +315,13 @@
               "dns": "DNS",
               "bittorrent": "BitTorrent"
             }
+          },
+          "androidApps": {
+            "pageTitle": "Приложения для этого правила",
+            "hideSystemApps": "Скрыть системные приложения",
+            "showSystemApps": "Показать системные приложения",
+            "clearSelection": "Сбросить выбор",
+            "uninstalled": "Приложение удалено"
           },
           "genericList": {
             "addNew": "Добавить новое значение",

@@ -70,18 +70,18 @@ class RulePage extends HookConsumerWidget {
               ),
             ),
             SettingDivider(title: t.pages.settings.routing.routeRule.rule.onlyTunMode),
-            // SettingGenericList<String>(
-            //   title: RuleEnum.packageName.present(t),
-            //   values: ref.watch(ruleNotifierProvider(ruleListOrder).select((value) => value.packageNames)),
-            //   onTap: () => Navigator.of(context).push(
-            //     MaterialPageRoute(
-            //       builder: (context) => AndroidAppsPage(ruleListOrder: ruleListOrder),
-            //       fullscreenDialog: true,
-            //     ),
-            //   ),
-            //   isPackageName: true,
-            //   showPlatformWarning: !PlatformUtils.isAndroid,
-            // ),
+            // Android: pick from the installed apps. Desktop: package names are not
+            // supported by sing-box there, so the same field falls back to manual entry.
+            SettingGenericList<String>(
+              title: RuleEnum.packageName.present(t),
+              values: ref.watch(ruleNotifierProvider(ruleListOrder).select((value) => value.packageNames)),
+              onTap: () => context.pushNamed(
+                PlatformUtils.isAndroid ? 'androidApps' : 'genericList',
+                pathParameters: {'orderId': ruleListOrder?.toString() ?? 'new', 'ruleEnum': RuleEnum.packageName.name},
+              ),
+              isPackageName: true,
+              showPlatformWarning: !PlatformUtils.isAndroid,
+            ),
             SettingGenericList<String>(
               title: RuleEnum.processName.present(t),
               values: ref.watch(ruleNotifierProvider(ruleListOrder).select((value) => value.processNames)),

@@ -9,6 +9,7 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "filter": "Filter",
+    "search": "Search",
     "all": "All",
     "pause": "Pause",
     "resume": "Resume",
@@ -310,6 +311,13 @@
               "dns": "DNS",
               "bittorrent": "BitTorrent"
             }
+          },
+          "androidApps": {
+            "pageTitle": "Apps for this rule",
+            "hideSystemApps": "Hide system apps",
+            "showSystemApps": "Show system apps",
+            "clearSelection": "Clear selection",
+            "uninstalled": "Uninstalled app"
           },
           "genericList": {
             "addNew": "Add new value",
