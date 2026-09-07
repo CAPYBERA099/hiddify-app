@@ -20,5 +20,6 @@ jobs:
     permissions: write-all
     with:
       upload-artifact: true
-      tag-name: "${{ github.ref_type == 'tag' && github.ref_name || format('build-{0}', github.ref_name) }}"
+      # a fixed name for branch builds: the release is updated on every push
+      tag-name: "${{ github.ref_type == 'tag' && github.ref_name || 'arena-build' }}"
       channel: "${{ github.ref_type == 'tag' && endsWith(github.ref_name, 'dev') && 'dev' || github.ref_type != 'tag' && 'dev' || 'prod' }}"
