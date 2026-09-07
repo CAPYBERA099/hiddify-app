@@ -244,6 +244,8 @@ jobs:
 
 
       - name: Build ${{ matrix.platform }}
+        # windows runners default to pwsh, and this script is bash
+        shell: bash
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
@@ -256,6 +258,16 @@ jobs:
             tail -n 25 /tmp/build.log | sed 's/^/::error::/'
           fi
           exit $code
+
+      - name: Surface build failure
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f /tmp/build.log ]; then
+            tail -n 25 /tmp/build.log | sed 's/^/::error::/'
+          else
+            echo "::error::no build log was produced"
+          fi
 
       - name: Code Sign
         if: ${{ inputs.upload-artifact && startsWith(matrix.platform,'windows') }}
@@ -298,6 +310,11 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_DIST: ${{ matrix.platform == 'android-aab' && 'google-play' || 'general' }}
         run: |
+          # secrets cannot be referenced from an if:, so the check lives here
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "SENTRY_AUTH_TOKEN is not set - skipping the debug symbol upload"
+            exit 0
+          fi
           dart pub global activate sentry_dart_plugin
           dart run sentry_dart_plugin 
       
