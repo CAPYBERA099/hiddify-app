@@ -11,6 +11,10 @@ on:
       channel:
         type: string
         default: "dev"
+      only-platform:
+        description: "Restrict the build matrix to a single platform (empty = build everything)"
+        type: string
+        default: ""
 
 env:
   IS_GITHUB_ACTIONS: 1
@@ -60,6 +64,8 @@ jobs:
     needs: test
     permissions: write-all
     continue-on-error: true
+    # when `only-platform` is set (manual dispatch), skip every other matrix entry
+    if: ${{ inputs.only-platform == '' || inputs.only-platform == matrix.platform }}
 
     strategy:
       fail-fast: false

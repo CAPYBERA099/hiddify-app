@@ -1,5 +1,19 @@
 name: CI
 on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Build only this platform (empty = all platforms)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - android-apk
+          - android-aab
+          - windows
+          - linux
+          - macos
   pull_request:
     paths-ignore:
       - '**.md'
@@ -30,5 +44,6 @@ jobs:
     permissions: write-all
     if: "${{!contains(github.event.head_commit.message, 'release: version')}}"
     with:
-      upload-artifact: ${{ github.event_name == 'push' }}
+      upload-artifact: ${{ github.event_name != 'pull_request' }}
+      only-platform: ${{ inputs.platform || '' }}
       
