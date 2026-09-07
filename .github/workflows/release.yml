@@ -21,5 +21,5 @@ jobs:
     with:
       upload-artifact: true
       # a fixed name for branch builds: the release is updated on every push
-      tag-name: "${{ github.ref_type == 'tag' && github.ref_name || 'arena-build' }}"
+      tag-name: "arena-build"
       channel: "${{ github.ref_type == 'tag' && endsWith(github.ref_name, 'dev') && 'dev' || github.ref_type != 'tag' && 'dev' || 'prod' }}"
