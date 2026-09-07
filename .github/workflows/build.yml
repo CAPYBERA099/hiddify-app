@@ -479,11 +479,11 @@ jobs:
           files: ./out/*
 
       - name: Create service_account.json
-        if: ${{ env.HAVE_AAB == '1' && secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: ${{ env.HAVE_AAB == '1' }}
         run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service_account.json
 
       - name: Deploy to Google Play Internal Testers
-        if: ${{ env.HAVE_AAB == '1' && secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: ${{ env.HAVE_AAB == '1' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: service_account.json
@@ -495,7 +495,7 @@ jobs:
 
   upload-to-testflight:
     needs: [build]
-    if: ${{ inputs.upload-artifact && inputs.tag-name != 'draft' && secrets.APPLE_UPLOAD_CERTIFICATE_P12 != '' }}
+    if: ${{ inputs.upload-artifact &&  inputs.tag-name != 'draft' }}
     #if: ${{ inputs.upload-artifact }}
     runs-on: macOS-latest
     timeout-minutes: 30
