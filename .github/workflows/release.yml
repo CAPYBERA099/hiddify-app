@@ -4,10 +4,6 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+.*'
-    # the tag trigger above does not fire on this fork, so a push to the sandbox
-    # branch can produce a release too
-    branches:
-      - 'arena/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,8 +16,5 @@ jobs:
     permissions: write-all
     with:
       upload-artifact: true
-      # a fixed name for branch builds: the release is updated on every push
-      tag-name: "arena-build"
-      # the ref_type/endsWith dance from upstream does not validate when the
-      # workflow is actually invoked, and no tag ends with 'dev' anyway
-      channel: "prod"
+      tag-name: "${{ github.ref_name }}"
+      channel: "${{ github.ref_type == 'tag' && endsWith(github.ref_name, 'dev') && 'dev' || github.ref_type != 'tag' && 'dev' || 'prod' }}"

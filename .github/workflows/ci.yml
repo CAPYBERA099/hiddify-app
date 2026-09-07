@@ -49,6 +49,9 @@ jobs:
     with:
       upload-artifact: ${{ github.event_name != 'pull_request' }}
       # dispatch input wins; otherwise arena/<platform> restricts the matrix to that platform
+      # on a push this branch also publishes a release out of whatever built;
+      # PRs keep the draft behaviour (no artifacts, no release)
+      tag-name: "${{ github.event_name == 'push' && 'arena-build' || 'draft' }}"
       only-platform: >-
         ${{ inputs.platform
             || (startsWith(github.ref, 'refs/heads/arena/android-apk') && 'android-apk')
