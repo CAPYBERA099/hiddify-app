@@ -27,6 +27,9 @@ on:
        - dev
        - android-fix-action-bug
        - new-design-v2 
+       # sandbox branch: push access works even when the token has no actions:write.
+       # arena/<platform> restricts the build matrix to that platform.
+       - 'arena/**'
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -45,5 +48,13 @@ jobs:
     if: "${{!contains(github.event.head_commit.message, 'release: version')}}"
     with:
       upload-artifact: ${{ github.event_name != 'pull_request' }}
-      only-platform: ${{ inputs.platform || '' }}
+      # dispatch input wins; otherwise arena/<platform> restricts the matrix to that platform
+      only-platform: >-
+        ${{ inputs.platform
+            || (startsWith(github.ref, 'refs/heads/arena/android-apk') && 'android-apk')
+            || (startsWith(github.ref, 'refs/heads/arena/android-aab') && 'android-aab')
+            || (startsWith(github.ref, 'refs/heads/arena/windows') && 'windows')
+            || (startsWith(github.ref, 'refs/heads/arena/linux') && 'linux')
+            || (startsWith(github.ref, 'refs/heads/arena/macos') && 'macos')
+            || '' }}
       
