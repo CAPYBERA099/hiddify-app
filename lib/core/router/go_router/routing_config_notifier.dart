@@ -18,6 +18,7 @@ import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/overview/profiles_page.dart';
 import 'package:hiddify/features/proxy/overview/proxies_overview_page.dart';
 import 'package:hiddify/features/route_rules/notifier/rule_notifier.dart';
+import 'package:hiddify/features/route_rules/overview/android_apps_page.dart';
 import 'package:hiddify/features/route_rules/overview/generic_list_page.dart';
 import 'package:hiddify/features/route_rules/overview/rule_page.dart';
 import 'package:hiddify/features/settings/overview/sections/chain_options_page.dart';
@@ -231,6 +232,18 @@ class RoutingConfigNotifier extends _$RoutingConfigNotifier {
                                   TransitionType.slide,
                                   state.pageKey,
                                   GenericListPage(ruleListOrder: orderId, ruleEnum: ruleEnum),
+                                );
+                              },
+                            ),
+                            GoRoute(
+                              name: 'androidApps',
+                              path: 'android-apps',
+                              pageBuilder: (_, state) {
+                                final orderId = int.tryParse(state.pathParameters['orderId']!);
+                                return customTransition(
+                                  TransitionType.slide,
+                                  state.pageKey,
+                                  AndroidAppsPage(ruleListOrder: orderId),
                                 );
                               },
                             ),

@@ -311,6 +311,13 @@
               "bittorrent": "BitTorrent"
             }
           },
+          "androidApps": {
+            "pageTitle": "Apps for this rule",
+            "hideSystemApps": "Hide system apps",
+            "showSystemApps": "Show system apps",
+            "clearSelection": "Clear selection",
+            "uninstalled": "Uninstalled app"
+          },
           "genericList": {
             "addNew": "Add new value",
             "update": "Update value",

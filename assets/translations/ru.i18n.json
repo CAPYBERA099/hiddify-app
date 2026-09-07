@@ -315,6 +315,13 @@
               "bittorrent": "BitTorrent"
             }
           },
+          "androidApps": {
+            "pageTitle": "Приложения для этого правила",
+            "hideSystemApps": "Скрыть системные приложения",
+            "showSystemApps": "Показать системные приложения",
+            "clearSelection": "Сбросить выбор",
+            "uninstalled": "Приложение удалено"
+          },
           "genericList": {
             "addNew": "Добавить новое значение",
             "update": "Обновить значение",
