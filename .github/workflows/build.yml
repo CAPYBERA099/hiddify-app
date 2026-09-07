@@ -457,6 +457,10 @@ jobs:
           else
             echo "no android aab in the artifacts - skipping the Play upload input"
           fi
+          # hashFiles() is not usable in a step-level if:, so publish a flag instead
+          if [ -f hiddify-android-market.aab ]; then
+            echo "HAVE_AAB=1" >> "$GITHUB_ENV"
+          fi
 
       - name: prepare_release_message
         run: |
@@ -475,11 +479,11 @@ jobs:
           files: ./out/*
 
       - name: Create service_account.json
-        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && hashFiles('hiddify-android-market.aab') != '' }}
+        if: ${{ env.HAVE_AAB == '1' && secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
         run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service_account.json
 
       - name: Deploy to Google Play Internal Testers
-        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && hashFiles('hiddify-android-market.aab') != '' }}
+        if: ${{ env.HAVE_AAB == '1' && secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: service_account.json
