@@ -49,7 +49,6 @@ jobs:
     with:
       upload-artifact: ${{ github.event_name != 'pull_request' }}
       # dispatch input wins; otherwise arena/<platform> restricts the matrix to that platform
-      tag-name: "arena-build"
       only-platform: >-
         ${{ inputs.platform
             || (startsWith(github.ref, 'refs/heads/arena/android-apk') && 'android-apk')
