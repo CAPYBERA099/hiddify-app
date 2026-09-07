@@ -60,65 +60,48 @@ jobs:
         run: echo "::set-output name=datetime::$(date +'%d.%H.%M')"
 
 
+  # The `matrix` context is not available in a job-level `if:`, so the platform
+  # filter is applied here instead: this job emits the matrix the build job uses.
+  select-matrix:
+    outputs:
+      include: ${{ steps.filter.outputs.include }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Filter build matrix
+        id: filter
+        env:
+          ONLY_PLATFORM: ${{ inputs.only-platform }}
+        run: |
+          cat > /tmp/all.json <<'JSON'
+          [
+            { "platform": "android-apk", "os": "ubuntu-latest", "targets": "apk" },
+            { "platform": "android-aab", "os": "ubuntu-latest", "targets": "aab" },
+            { "platform": "windows", "os": "windows-latest", "aarch": "amd64", "targets": "exe,msix,zip" },
+            { "platform": "linux", "os": "ubuntu-22.04", "aarch": "amd64", "targets": "deb,gz,AppImage" },
+            { "platform": "macos", "os": "macos-15", "aarch": "universal", "targets": "dmg,pkg" }
+          ]
+          JSON
+          if [ -n "$ONLY_PLATFORM" ]; then
+            jq --arg p "$ONLY_PLATFORM" '[.[] | select(.platform == $p)]' /tmp/all.json > /tmp/sel.json
+          else
+            cp /tmp/all.json /tmp/sel.json
+          fi
+          if [ "$(jq 'length' /tmp/sel.json)" -eq 0 ]; then
+            echo "::error::only-platform '$ONLY_PLATFORM' matches no matrix entry"
+            exit 1
+          fi
+          jq -c . /tmp/sel.json
+          echo "include=$(jq -c . /tmp/sel.json)" >> "$GITHUB_OUTPUT"
+
   build:
-    needs: test
+    needs: [test, select-matrix]
     permissions: write-all
     continue-on-error: true
-    # when `only-platform` is set (manual dispatch), skip every other matrix entry
-    if: ${{ inputs.only-platform == '' || inputs.only-platform == matrix.platform }}
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: android-apk
-            os: ubuntu-latest
-            targets: apk
-
-          - platform: android-aab
-            os: ubuntu-latest
-            targets: aab
-
-          - platform: windows
-            os: windows-latest
-            aarch: amd64
-            targets: exe,msix,zip
-
-          - platform: linux
-            os: ubuntu-22.04
-            aarch: amd64
-            targets: deb,gz,AppImage
-
-          # - platform: linux-amd64
-          #   os: ubuntu-22.04
-          #   aarch: amd64
-          #   targets: deb,gz
-
-          # - platform: linux-arm64
-          #   os: ubuntu-24.04-arm
-          #   aarch: arm64
-          #   targets: deb,gz
-
-          # - platform: linux-amd64-musl
-          #   os: ubuntu-22.04
-          #   aarch: amd64
-          #   targets: deb,gz
-
-          # - platform: linux-arm64-musl
-          #   os: ubuntu-24.04-arm
-          #   aarch: arm64
-          #   targets: deb,gz
-            
-          - platform: macos
-            os: macos-15
-            aarch: universal
-            targets: dmg,pkg
-            
-          # - platform: ios
-          #   os: macos-15
-          #   aarch: universal
-          #   filename: hiddify-ios
-          #   targets: ipa
+        include: ${{ fromJSON(needs.select-matrix.outputs.include) }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout
