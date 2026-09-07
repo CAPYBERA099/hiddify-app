@@ -1,0 +1,36 @@
+name: Test diagnostics
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/test_diag.yml']
+
+env:
+  IS_GITHUB_ACTIONS: 1
+  CHANNEL: "dev"
+  FLUTTER_VERSION: '3.38.5'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2.21.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Prepare
+        run: make linux-amd64-prepare
+
+      # Job logs are stored on a blob host this sandbox cannot reach, so the
+      # failing output is surfaced through check-run annotations instead.
+      - name: Run tests and surface failures as annotations
+        run: |
+          flutter test --reporter expanded > /tmp/out.txt 2>&1
+          code=$?
+          echo "flutter test exit_code=$code"
+          tail -5 /tmp/out.txt
+          # annotations survive even though the raw log host is unreachable here
+          { grep -nE '\[E\]|Expected:|Actual:|Which:|Error:|Exception|Failed to load|Some tests failed|All tests passed|\.dart:[0-9]+:[0-9]+' /tmp/out.txt | tail -40;
+            echo "SUMMARY $(tail -1 /tmp/out.txt)"; } | sed 's/^/::error::/'
