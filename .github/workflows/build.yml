@@ -71,6 +71,7 @@ jobs:
         id: filter
         env:
           ONLY_PLATFORM: ${{ inputs.only-platform }}
+          APPLE_CERT: ${{ secrets.APPLE_CERTIFICATE_P12 }}
         run: |
           cat > /tmp/all.json <<'JSON'
           [
@@ -85,6 +86,12 @@ jobs:
             jq --arg p "$ONLY_PLATFORM" '[.[] | select(.platform == $p)]' /tmp/all.json > /tmp/sel.json
           else
             cp /tmp/all.json /tmp/sel.json
+          fi
+          # a platform whose signing material is absent cannot produce an artifact,
+          # so it is dropped from the matrix instead of burning a runner
+          if [ -z "$APPLE_CERT" ]; then
+            echo "APPLE_CERTIFICATE_P12 is not set - dropping macos from the matrix"
+            jq '[.[] | select(.platform != "macos")]' /tmp/sel.json > /tmp/sel2.json && mv /tmp/sel2.json /tmp/sel.json
           fi
           if [ "$(jq 'length' /tmp/sel.json)" -eq 0 ]; then
             echo "::error::only-platform '$ONLY_PLATFORM' matches no matrix entry"
@@ -240,7 +247,15 @@ jobs:
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
-          make ${{ matrix.platform }}-release
+          set +e
+          make ${{ matrix.platform }}-release 2>&1 | tee /tmp/build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            # job logs live on a blob host that is not reachable from everywhere,
+            # so the tail of a failing build is also surfaced as annotations
+            tail -n 25 /tmp/build.log | sed 's/^/::error::/'
+          fi
+          exit $code
 
       - name: Code Sign
         if: ${{ inputs.upload-artifact && startsWith(matrix.platform,'windows') }}
@@ -435,10 +450,13 @@ jobs:
 
       - name: Display Files Structure
         run: |
-          ls -R ./out
-          ls -R ./.github/
-          ls -R ./.git/
-          mv out/hiddify-android-market.aab  hiddify-android-market.aab
+          ls -R ./out || echo "no artifacts were downloaded"
+          # the aab only exists when the android-aab build produced one
+          if [ -f out/hiddify-android-market.aab ]; then
+            mv out/hiddify-android-market.aab hiddify-android-market.aab
+          else
+            echo "no android aab in the artifacts - skipping the Play upload input"
+          fi
 
       - name: prepare_release_message
         run: |
@@ -446,7 +464,7 @@ jobs:
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
-        if: ${{ success() }}
+        if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -457,9 +475,11 @@ jobs:
           files: ./out/*
 
       - name: Create service_account.json
+        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && hashFiles('hiddify-android-market.aab') != '' }}
         run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' > service_account.json
 
       - name: Deploy to Google Play Internal Testers
+        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && hashFiles('hiddify-android-market.aab') != '' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: service_account.json
@@ -471,7 +491,7 @@ jobs:
 
   upload-to-testflight:
     needs: [build]
-    if: ${{ inputs.upload-artifact &&  inputs.tag-name != 'draft' }}
+    if: ${{ inputs.upload-artifact && inputs.tag-name != 'draft' && secrets.APPLE_UPLOAD_CERTIFICATE_P12 != '' }}
     #if: ${{ inputs.upload-artifact }}
     runs-on: macOS-latest
     timeout-minutes: 30
